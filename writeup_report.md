@@ -3,11 +3,11 @@
 The goals / steps of this project are the following:
 
 * Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier Linear SVM classifier
-* Optionally, apply a color transform and append binned color features, as well as histograms of color, to the HOG feature vector. 
-* Normalize features and randomize a selection for training and testing.
-* Implement a sliding-window technique and use trained classifier to search for vehicles in images.
+* Optionally, apply a color transform and append binned color features, as well as histograms of color, to the HOG feature vector
+* Normalize features and randomize a selection for training and testing
+* Implement a sliding-window technique and use trained classifier to search for vehicles in images
 * Run pipeline on a video stream and create a heat map of recurring detections frame by frame to reject outliers and follow detected vehicles.
-* Estimate a bounding box for vehicles detected.
+* Estimate a bounding box for vehicles detected
 
 [//]: # (Image References)
 [image1]: ./output_images/egcarimg.png
@@ -36,7 +36,7 @@ You're reading it!
 
 The code for this step is contained in the code cell named as 'Define Features' the IPython notebook [vehDetTrack.ipynb](https://github.com/sseshadr/CarND-Vehicle-Detection/blob/master/vehDetTrack.ipynb).  
 
-I started by reading in all the `vehicle` and `non-vehicle` images. I used glob to loop through all the folders and append the filenames of cars and not cars. Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
+I started by reading in all the `vehicle` and `non-vehicle` images. I used `glob` to loop through all the folders and append the filenames of cars and not cars. Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
 
 ![alt text][image1]
 
@@ -45,7 +45,6 @@ I started by reading in all the `vehicle` and `non-vehicle` images. I used glob 
 I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
 
 Here is an example using the `RGB` color space and HOG parameters of `orientations=6`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
-
 
 ![alt text][image3]
 
@@ -63,7 +62,7 @@ As shown above, I tried the entire algorithm on multiple color spaces first and 
 
 #### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I trained a linear SVM using sklearn's SVM function. This can be found in the 'Train Classifier' cell of  the IPython notebook [vehDetTrack.ipynb](https://github.com/sseshadr/CarND-Vehicle-Detection/blob/master/vehDetTrack.ipynb). 
+I trained a linear SVM using `sklearn.SVM.LinearSVC` function. This can be found in the 'Train Classifier' cell of  the IPython notebook [vehDetTrack.ipynb](https://github.com/sseshadr/CarND-Vehicle-Detection/blob/master/vehDetTrack.ipynb). Note that proper normalization was also applied to all features before training the classifier using `StandardScaler` function.
 
 ### Sliding Window Search
 
@@ -81,7 +80,7 @@ The second one is based on HoG subsampling. Here we extract the HoG features of 
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-As explained above in respective sections, ultimately I searched using HSV 3-channel HOG features plus spatially binned color and histograms of color in the feature vector.  Example images are already listed above. I first tried the straight sliding window search which was slow. Subsampling improved the performance. I also used a scale factor of 1.5 for the same reason.
+As explained above in respective sections, I searched using HSV 3-channel HOG features plus spatially binned color and histograms of color in the feature vector.  Example images are already listed above. I first tried the straight sliding window search which was slow. Subsampling improved the performance. I also used a scale factor of 1.5 for the same reason.
 
 ---
 
@@ -93,7 +92,8 @@ Here's a [link to my video result](./test_videos_output/project_output.mp4)
 
 #### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
-I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  This threshold value was obtained empirically to have a reasonable balance between number of false positives and lack of actual detections (false negatives). I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected. Example frame, raw detections, corresponding heat map and the filtered bounding box based on the thresholded heat map is shown below.
+(1) Selecting a sub image region of interest based on the Y location of pixels helped remove false detections near the top half of the image.
+(2) I recorded the positions of positive detections in each frame of the video. From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions. This threshold value was obtained empirically to have a reasonable balance between number of false positives and lack of actual detections (false negatives). I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap. I then assumed each blob corresponded to a vehicle. I constructed bounding boxes to cover the area of each blob detected. Example frame, raw detections, corresponding heat map and the filtered bounding box based on the thresholded heat map is shown below.
 
 ![alt text][image8]
 
