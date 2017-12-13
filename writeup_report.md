@@ -106,6 +106,7 @@ Here's a [link to my video result](./test_videos_output/project_output.mp4)
 (4) Additonally, I also implemented a filtering mechanism to remove smaller bounding boxes. This was a function of the area of the estimated bounding boxes. Emrpirically arrived at a value of 1000 pixels. This could be tuned more to achieve a balance between false positives and false negatives.
 
 (5) Also used the C parameter when training the SVC to generalize the model as explained in the training classifier section above.
+
 ---
 
 ### Discussion
