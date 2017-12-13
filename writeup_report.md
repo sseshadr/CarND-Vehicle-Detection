@@ -18,6 +18,7 @@ The goals / steps of this project are the following:
 [image6]: ./output_images/slidingResult.png
 [image7]: ./output_images/hogSubsamplingResult.png
 [image8]: ./output_images/hogSubsamplingFiltered.png
+[image5]: ./output_images/yuvFeature.png
 [video1]: ./project_video.mp4
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
@@ -56,13 +57,17 @@ Here is an example using the `HSV` color space and HOG parameters of `orientatio
 
 ![alt text][image5]
 
+Here is an example using the `YUV` color space and HOG parameters of `orientations=9`, `pixels_per_cell=(16, 16)` and `cells_per_block=(2, 2)`:
+
+![alt text][image15]
+
 #### 2. Explain how you settled on your final choice of HOG parameters.
 
-As shown above, I tried the entire algorithm on multiple color spaces first and settled on the HSV. Intuition says this is probably because the car colors are a little more saturated than the background. One of the lectures also mentioned this which validates the intuition. I also watched a project walkthrough that suggested that orientations be set to 9. The reason being that the original HoG paper suggests that the performance of the features tapers off after this number. I also computed features on all 3 channels of the image to get as many features as possible and not omit any valuable information. Finally, I also used color binning features and color histogram features. I used `spatial_size=(32,32)` and `histbins=32`. I increased these values from 16 in the starter code to again have a longer feature vector.
+As shown above, I tried the entire algorithm on multiple color spaces first. Intuition says HSV should work. This is probably because the car colors are a little more saturated than the background. One of the lectures also mentioned this which validates the intuition. Even thought this worked for the test images, the test video showed a lot of false positives. I then took the project review comments that suggested using YUV or Lab. I started with YUV and also increased pixels per cell to speed up the processing while maintaining good accuracy. I also watched a project walkthrough that suggested that orientations be set to 9. The reason being that the original HoG paper suggests that the performance of the features tapers off after this number. I also computed features on all 3 channels of the image to get as many features as possible and not omit any valuable information. Finally, I also used color binning features and color histogram features. I used `spatial_size=(32,32)` and `histbins=32`. I increased these values from 16 in the starter code to again have a longer feature vector.
 
 #### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I trained a linear SVM using `sklearn.SVM.LinearSVC` function. This can be found in the 'Train Classifier' cell of  the IPython notebook [vehDetTrack.ipynb](https://github.com/sseshadr/CarND-Vehicle-Detection/blob/master/vehDetTrack.ipynb). Note that proper normalization was also applied to all features before training the classifier using `StandardScaler` function.
+I trained a linear SVM using `sklearn.SVM.LinearSVC` function. This can be found in the 'Train Classifier' cell of  the IPython notebook [vehDetTrack.ipynb](https://github.com/sseshadr/CarND-Vehicle-Detection/blob/master/vehDetTrack.ipynb). Note that proper normalization was also applied to all features before training the classifier using `StandardScaler` function. To reduce false positives, I played with the `C` parameter. I tried the project reviewer suggested values of 0.01 and 0.001 and settled on 0.01 as it provided better results.
 
 ### Sliding Window Search
 
@@ -96,7 +101,11 @@ Here's a [link to my video result](./test_videos_output/project_output.mp4)
 (2) I recorded the positions of positive detections in each frame of the video. From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions. This threshold value was obtained empirically to have a reasonable balance between number of false positives and lack of actual detections (false negatives). I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap. I then assumed each blob corresponded to a vehicle. I constructed bounding boxes to cover the area of each blob detected. Example frame, raw detections, corresponding heat map and the filtered bounding box based on the thresholded heat map is shown below.
 
 ![alt text][image8]
+(3) To remove the sensitivity against noisy bounding boxes, I implemented an accumulated heat map mechanism (thanks to the project reviewer's idea). The idea is to keep track of the heat map of the previous 'N' frames and computing an accumulated heat map by adding all those frames. Then we implement (2) where we threshold on the accumulated heat map. The logic is that, if there were boxes that appeared in only 1 frame, they would have relatively less 'heat' thus getting thresholded out. This also helps in a much higher threshold value for the heat map since now we are looking at an accumulation of 5 frames. The negative impact of this is that it might take a few frames for a detection to be 'confirmed'.
 
+(4) Additonally, I also implemented a filtering mechanism to remove smaller bounding boxes. This was a function of the area of the estimated bounding boxes. Emrpirically arrived at a value of 1000 pixels. This could be tuned more to achieve a balance between false positives and false negatives.
+
+(5) Also used the C parameter when training the SVC to generalize the model as explained in the training classifier section above.
 ---
 
 ### Discussion
@@ -105,7 +114,8 @@ Here's a [link to my video result](./test_videos_output/project_output.mp4)
 
 I see 3 distinct scenarios where the algorithm is lacking:
 
-* Tracking mid to far white car: Seems like HSV is unable to reliably identify features for a white car that is some distance from the ego car. Perhaps there are untested colorspaces which might be better.
+* Tracking mid to far white car: Seems like HSV is unable to reliably identify features for a white car that is some distance from the ego car. Perhaps there are untested colorspaces which might be better. EDIT: After using YUV based on the project reviewer's comments, this is a non issue. The original intuition of untested colorspaces was true after all!
 * Detections near shadows: There are a lot of false detections under shade of the tree. Need to investigate which feature (color, histogram or HoG) is contributing to this and see if some intuition can be developed.
 * General false detections: There are a couple of ways in which this can be mitigated. (1) A number of the noisy false detections seem to be smaller bounding boxes. We could write a condition that avoids smaller bounding boxes. (2) Write a tracking algorithm that averages bounding boxes over multiple frames. This will have a history effect and result in less changes frame to frame.
-
+EDIT: Implemented both (1) and (2) to give reduced false positives.
+* The pipeline is slow. IF we are deploying this in a real time system, the code needs to be optimized for performance.
