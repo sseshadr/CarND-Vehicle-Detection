@@ -18,7 +18,7 @@ The goals / steps of this project are the following:
 [image6]: ./output_images/slidingResult.png
 [image7]: ./output_images/hogSubsamplingResult.png
 [image8]: ./output_images/hogSubsamplingFiltered.png
-[image5]: ./output_images/yuvFeature.png
+[image15]: ./output_images/yuvFeature.png
 [video1]: ./project_video.mp4
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
